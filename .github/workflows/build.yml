@@ -19,8 +19,20 @@ jobs:
             -w /project \
             espressif/idf \
             idf.py build
+
+      - name: Prepare firmware
+        run: |
+          mkdir -p firmware
+
+          cp build/*.bin firmware/
+          cp build/bootloader/bootloader.bin firmware/
+          cp build/partition_table/partition-table.bin firmware/
+
+          echo "Commit: $GITHUB_SHA" > firmware/version.txt
+          echo "Build date: $(date -u)" >> firmware/version.txt
+
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: esp32-firmware
-          path: build/
+          path: firmware/
