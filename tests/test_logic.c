@@ -28,6 +28,6 @@ int main(void)
     test_add();
     test_multiply();
     printf("ALL TESTS PASSED\n");
-
+    printf("you can build ur artifact now!");
     return 0;
 }
