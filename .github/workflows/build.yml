@@ -11,6 +11,13 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+      - name: Run unit tests
+        run: |
+          docker run --rm \
+          -v "${PWD}:/project" \
+          -w /project \
+          espressif/idf \
+          bash -c "gcc -Imain tests/test_logic.c main/match.c -o test_logic && ./test_logic"
 
       - name: Build ESP32 firmware
         run: |
