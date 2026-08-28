@@ -70,7 +70,7 @@ void app_main(void)
     RUN_TEST(test_divide_positive_numbers);
     RUN_TEST(test_divide_fraction);
     RUN_TEST(test_divide_by_zero);
-    printf("Hil testing .........................");
-    printf("Hil testing .............bye............");
+    printf("Hil testing .........................\n");
+    printf("Hil testing .............bye............\n");
     UNITY_END();
 }
