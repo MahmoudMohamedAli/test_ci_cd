@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
-#include "math.h"
+#include "../components/math/include/math.h"
 
 void test_add(void)
 {

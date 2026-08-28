@@ -21,3 +21,11 @@ jobs:
             -w /project/tests \
             espressif/idf \
             idf.py build
+      - name: Flash test firmware
+        run: |
+          docker run --rm \
+            --device=/dev/ttyUSB0 \
+            -v "${PWD}:/project" \
+            -w /project/tests \
+            espressif/idf \
+            idf.py -p /dev/ttyUSB0 flash
