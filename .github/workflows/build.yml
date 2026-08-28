@@ -17,7 +17,7 @@ jobs:
           -v "${PWD}:/project" \
           -w /project \
           espressif/idf \
-          bash -c "gcc -Imain tests/test_logic.c main/math.c -o test_logic && ./test_logic"
+          bash -c "gcc -I components/math/include tests/host/test_logic.c components/math/math.c -o test_logic && ./test_logic"
 
       - name: Build ESP32 firmware
         run: |
