@@ -1,5 +1,6 @@
 #include "unity.h"
 #include "math.h"
+#include <stdio.h>
 
 void test_add_positive_numbers(void)
 {
@@ -69,6 +70,7 @@ void app_main(void)
     RUN_TEST(test_divide_positive_numbers);
     RUN_TEST(test_divide_fraction);
     RUN_TEST(test_divide_by_zero);
-
+    printf("Hil testing .........................");
+    printf("Hil testing .............bye............");
     UNITY_END();
 }
