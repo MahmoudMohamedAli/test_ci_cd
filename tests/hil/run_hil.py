@@ -7,50 +7,64 @@ BAUDRATE = 115200
 TIMEOUT = 1
 TEST_TIMEOUT = 60
 
-PASS_STRING = "ALL TESTS PASSED"
-FAIL_STRING = "FAIL"
-
 
 def main():
+
     print(f"Opening {PORT}...")
 
     try:
         ser = serial.Serial(
-            port=PORT,
-            baudrate=BAUDRATE,
+            PORT,
+            BAUDRATE,
             timeout=TIMEOUT
         )
     except Exception as e:
-        print(f"ERROR: Could not open serial port: {e}")
+        print(f"ERROR: Cannot open serial port: {e}")
         sys.exit(1)
 
-    # Opening the serial port can reset some ESP32 boards.
-    # Give the ESP32 time to boot.
-    time.sleep(2)
+    print("Serial port opened.")
 
-    print("Waiting for Unity test result...")
+    # Give the serial connection time to initialize
+    time.sleep(1)
+
+    # Reset ESP32
+    print("Resetting ESP32...")
+
+    ser.dtr = False
+    ser.rts = True
+    time.sleep(0.1)
+    ser.rts = False
+
+    print("Waiting for Unity tests...")
     print("----------------------------------------")
 
     start_time = time.time()
 
     while time.time() - start_time < TEST_TIMEOUT:
 
-        line = ser.readline().decode("utf-8", errors="replace").strip()
+        line = ser.readline().decode(
+            "utf-8",
+            errors="replace"
+        ).strip()
 
         if not line:
             continue
 
         print(line)
 
-        if PASS_STRING in line:
+        # Test passed
+        if "ALL TESTS PASSED" in line:
             print("----------------------------------------")
             print("HIL TEST RESULT: PASS")
+
             ser.close()
             sys.exit(0)
 
-        if FAIL_STRING in line:
+        # Test failed
+        if "FAILURES" in line:
             print("----------------------------------------")
             print("HIL TEST RESULT: FAIL")
+
             ser.close()
             sys.exit(1)
 
