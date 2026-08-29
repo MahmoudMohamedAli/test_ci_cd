@@ -28,8 +28,8 @@ jobs:
                 -I components/math/include \
                 tests/host/test_logic.c \
                 components/math/math.c \
-                -o /tmp/test_logic &&
-              ./tmp/test_logic
+                -o /test_logic &&
+              ./test_logic
             "
 
 
