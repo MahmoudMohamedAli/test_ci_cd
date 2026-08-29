@@ -28,7 +28,7 @@ jobs:
                 -I components/math/include \
                 tests/host/test_logic.c \
                 components/math/math.c \
-                -o /test_logic &&
+                -o test_logic && chmod +x test_logic &&	
               ./test_logic
             "
 
