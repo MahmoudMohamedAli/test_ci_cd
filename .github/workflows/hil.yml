@@ -29,3 +29,7 @@ jobs:
             -w /project/tests/hil \
             espressif/idf \
             idf.py -p /dev/ttyUSB0 flash
+      
+      - name: Run HIL tests
+        run: |
+          python3 tests/hil/run_hil.py 
