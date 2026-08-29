@@ -1,0 +1,108 @@
+name: ESP32 CI/CD
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  # ==========================================
+  # 1. HOST UNIT TESTS
+  # ==========================================
+  host-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Run host unit tests
+        run: |
+          docker run --rm \
+            -v "${PWD}:/project" \
+            -w /project \
+            espressif/idf \
+            bash -c "
+              gcc \
+                -I components/math/include \
+                tests/host/test_logic.c \
+                components/math/math.c \
+                -o /tmp/test_logic &&
+              ./tmp/test_logic
+            "
+
+
+  # ==========================================
+  # 2. HARDWARE-IN-THE-LOOP TEST
+  # ==========================================
+  hil-test:
+    runs-on: [self-hosted, self-hosted]
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Check Docker
+        run: docker --version
+
+      - name: Build HIL test firmware
+        run: |
+          docker run --rm \
+            -v "${PWD}:/project" \
+            -w /project/tests/hil \
+            espressif/idf \
+            idf.py build
+
+      - name: Flash HIL test firmware
+        run: |
+          docker run --rm \
+            --device=/dev/ttyUSB0 \
+            -v "${PWD}:/project" \
+            -w /project/tests/hil \
+            espressif/idf \
+            idf.py -p /dev/ttyUSB0 flash
+
+      - name: Run HIL tests
+        run: |
+          python3 tests/hil/run_hil.py
+
+
+  # ==========================================
+  # 3. PRODUCTION BUILD
+  # ==========================================
+  production-build:
+    needs:
+      - host-test
+      - hil-test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Build production firmware
+        run: |
+          docker run --rm \
+            -v "${PWD}:/project" \
+            -w /project \
+            espressif/idf \
+            idf.py build
+
+      - name: Prepare firmware
+        run: |
+          mkdir -p firmware
+
+          cp build/*.bin firmware/
+          cp build/bootloader/bootloader.bin firmware/
+          cp build/partition_table/partition-table.bin firmware/
+
+          echo "Commit: $GITHUB_SHA" > firmware/version.txt
+          echo "Build date: $(date -u)" >> firmware/version.txt
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-firmware
+          path: firmware/
