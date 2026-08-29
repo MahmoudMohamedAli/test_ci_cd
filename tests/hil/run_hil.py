@@ -1,6 +1,7 @@
 import serial
 import time
 import sys
+import re
 
 PORT = "/dev/ttyUSB0"
 BAUDRATE = 115200
@@ -23,7 +24,7 @@ def main():
         sys.exit(1)
 
     print("Serial port opened.")
-
+    ser.reset_input_buffer()
     # Give the serial connection time to initialize
     time.sleep(1)
 
@@ -51,22 +52,23 @@ def main():
             continue
 
         print(line)
-
-        # Test passed
-        if "ALL TESTS PASSED" in line:
+        match = re.search( r"(\d+)\s+Tests\s+(\d+)\s+Failures\s+(\d+)\s+Ignored",line)
+        if match:
+            tests = int(match.group(1))
+            failures = int(match.group(2))
+            ignored = int(match.group(3))
             print("----------------------------------------")
-            print("HIL TEST RESULT: PASS")
-
-            ser.close()
-            sys.exit(0)
-
-        # Test failed
-        if "FAILURES" in line:
-            print("----------------------------------------")
-            print("HIL TEST RESULT: FAIL")
-
-            ser.close()
-            sys.exit(1)
+            print(f"Tests:    {tests}")
+            print(f"failures: {failures}")
+            print(f"ignored:  {ignored}")
+            if tests > 0 and failures == 0:
+                print("HIL TEST RESULT: PASS")
+                ser.close()
+                sys.exit(0)
+            else:
+                print("HIL TEST RESULT: FAIL")
+                ser.close()
+                sys.exit(1)   
 
     print("----------------------------------------")
     print("HIL TEST RESULT: TIMEOUT")
