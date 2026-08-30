@@ -95,9 +95,9 @@ jobs:
         run: |
           mkdir -p firmware
 
-          cp build/*.bin firmware/
-          cp build/bootloader/bootloader.bin firmware/
-          cp build/partition_table/partition-table.bin firmware/
+          cp build/hello_world.bin firmware/app.bin
+          cp build/bootloader/bootloader.bin firmware/bootloader.bin
+          cp build/partition_table/partition-table.bin firmware/partition-table.bin
           echo "version: ${GITHUB_REF_NAME}" > firmware/version.txt
           echo "Commit: ${GITHUB_SHA}" >> firmware/version.txt
           echo "Build date: $(date -u)" >> firmware/version.txt
@@ -134,4 +134,44 @@ jobs:
           generate_release_notes: true
           files: |
             firmware/*.bin
-            firmware/version.txt     
+            firmware/version.txt
+  
+  # ==================================================
+  # 5. DEPLOY PRODUCTION FIRMWARE
+  # ==================================================
+  deploy:
+    needs:
+      - production-build
+
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Download production firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: esp32-firmware
+          path: firmware
+
+      - name: Check firmware
+        run: |
+          echo "Firmware to deploy:"
+          ls -lh firmware/
+
+      - name: Flash production firmware
+        run: |
+          docker run --rm \
+            --device=/dev/ttyUSB0 \
+            -v "${PWD}/firmware:/firmware" \
+            espressif/idf \
+            esptool \
+              --port /dev/ttyUSB0 \
+              write_flash \
+              0x1000 /firmware/bootloader.bin \
+              0x8000 /firmware/partition-table.bin \
+              0x10000 /firmware/app.bin
+
+      - name: Deployment complete
+        run: |
+          echo "Production firmware ${GITHUB_REF_NAME} deployed to ESP32"      
