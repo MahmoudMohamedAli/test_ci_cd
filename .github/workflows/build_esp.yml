@@ -4,6 +4,8 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+  tags:
+    - 'v*'
 
 jobs:
 
@@ -97,8 +99,8 @@ jobs:
           cp build/*.bin firmware/
           cp build/bootloader/bootloader.bin firmware/
           cp build/partition_table/partition-table.bin firmware/
-
-          echo "Commit: $GITHUB_SHA" > firmware/version.txt
+          echo "version: ${GITHUB_REF_NAME}" > firmware/version.txt
+          echo "Commit: ${GITHUB_SHA}" >> firmware/version.txt
           echo "Build date: $(date -u)" >> firmware/version.txt
 
       - name: Upload firmware
@@ -106,3 +108,31 @@ jobs:
         with:
           name: esp32-firmware
           path: firmware/
+
+  release:
+    needs:
+      - production-build
+
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: esp32-firmware
+          path: firmware
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ESP32 Firmware ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            firmware/*.bin
+            firmware/version.txt     
